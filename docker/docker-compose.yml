@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: parish-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_dev
+      MYSQL_DATABASE: parish
+      MYSQL_USER: parish
+      MYSQL_PASSWORD: parish_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - parish_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  parish_mysql_data:

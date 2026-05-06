@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: parish-celebrations
+  datasource:
+    url: jdbc:mysql://localhost:3306/parish?useSSL=false&serverTimezone=UTC
+    username: parish
+    password: parish_dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: true
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+logging:
+  level:
+    com.parish.celebrations: DEBUG
