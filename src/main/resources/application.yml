@@ -2,9 +2,9 @@ spring:
   application:
     name: parish-celebrations
   datasource:
-    url: jdbc:mysql://localhost:3306/parish?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: parish
-    password: parish_dev
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/parish?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:parish}
+    password: ${SPRING_DATASOURCE_PASSWORD:parish_dev}
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,15 +15,15 @@ spring:
     show-sql: false
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   error:
     include-message: always
 
 logging:
   level:
-    com.parish.celebrations: DEBUG
+    com.parish.celebrations: INFO
 
 app:
   jwt:
-    secret: "kairos-parish-super-secret-key-for-jwt-signing-must-be-long-enough-256bits"
-    expiration-ms: 86400000   # 24 hours
+    secret: ${JWT_SECRET:kairos-parish-super-secret-key-for-jwt-signing-must-be-long-enough-256bits}
+    expiration-ms: 86400000
