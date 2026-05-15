@@ -1,30 +1,27 @@
 package com.parish.celebrations.scheduling.domain;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Entity
+@DiscriminatorValue("MASS")
 public class Mass extends Celebration {
 
-    private String intention;       // e.g. "For the soul of Maria Garcia"
+    private String intention;
+
+    @Column(name = "sunday_mass")
     private boolean sundayMass;
 
-    public Mass(UUID id, LocalDateTime scheduledAt, UUID locationId, UUID presidingPriestId,
+    protected Mass() {}
+
+    public Mass(UUID locationId, UUID presidingPriestId, LocalDateTime scheduledAt,
                 String intention, boolean sundayMass) {
-        super(id, scheduledAt, locationId, presidingPriestId);
+        super(locationId, presidingPriestId, scheduledAt);
         this.intention = intention;
         this.sundayMass = sundayMass;
     }
 
-    @Override
-    public CelebrationType type() {
-        return CelebrationType.MASS;
-    }
-
-    @Override
-    protected void validateForConfirmation() {
-        // A regular Mass has no extra invariants beyond the base ones.
-    }
-
-    public String intention() { return intention; }
+    public String getIntention() { return intention; }
     public boolean isSundayMass() { return sundayMass; }
 }

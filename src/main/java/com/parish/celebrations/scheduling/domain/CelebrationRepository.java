@@ -1,23 +1,17 @@
 package com.parish.celebrations.scheduling.domain;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Domain-side contract for persisting Celebrations.
- *
- * The implementation (using JPA, MySQL, etc.) lives in the infrastructure
- * package. The domain doesn't know how it's persisted — only that it can be.
- */
-public interface CelebrationRepository {
+public interface CelebrationRepository extends JpaRepository<Celebration, UUID> {
 
-    void save(Celebration celebration);
+    Page<Celebration> findByScheduledAtBetween(LocalDateTime from, LocalDateTime to, Pageable pageable);
 
-    Optional<Celebration> findById(UUID id);
+    List<Celebration> findByScheduledAtBetween(LocalDateTime from, LocalDateTime to);
 
-    List<Celebration> findBetween(LocalDateTime from, LocalDateTime to);
-
-    List<Celebration> findByPresidingPriest(UUID priestId);
+    Page<Celebration> findByPresidingPriestId(UUID priestId, Pageable pageable);
 }

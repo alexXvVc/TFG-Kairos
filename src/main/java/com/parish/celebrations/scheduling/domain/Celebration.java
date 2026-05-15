@@ -1,71 +1,79 @@
 package com.parish.celebrations.scheduling.domain;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Aggregate root for the scheduling context.
- *
- * Subtypes (Mass, Baptism, Wedding...) enforce their own invariants.
- * This base class holds what every celebration shares: when, where, who presides.
- *
- * Persistence note: keep JPA annotations out of this file when possible.
- * If you choose to annotate directly (pragmatic), use JOINED inheritance.
- */
+@Entity
+@Table(name = "celebration")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
 public abstract class Celebration {
 
-    private final UUID id;
-    private LocalDateTime scheduledAt;
-    private UUID locationId;          // reference to Location aggregate by ID only
-    private UUID presidingPriestId;   // reference to Person aggregate by ID only
+    @Id
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private CelebrationStatus status;
+
+    @Column(name = "scheduled_at", nullable = false)
+    private LocalDateTime scheduledAt;
+
+    @Column(name = "location_id", columnDefinition = "BINARY(16)")
+    private UUID locationId;
+
+    @Column(name = "presiding_priest_id", columnDefinition = "BINARY(16)")
+    private UUID presidingPriestId;
+
     private String notes;
 
-    protected Celebration(UUID id, LocalDateTime scheduledAt, UUID locationId, UUID presidingPriestId) {
-        this.id = Objects.requireNonNull(id, "id is required");
-        this.scheduledAt = Objects.requireNonNull(scheduledAt, "scheduledAt is required");
-        this.locationId = Objects.requireNonNull(locationId, "locationId is required");
-        this.presidingPriestId = Objects.requireNonNull(presidingPriestId, "presidingPriestId is required");
+    protected Celebration() {}
+
+    protected Celebration(UUID locationId, UUID presidingPriestId, LocalDateTime scheduledAt) {
+        this.id = UUID.randomUUID();
         this.status = CelebrationStatus.DRAFT;
+        this.locationId = locationId;
+        this.presidingPriestId = presidingPriestId;
+        this.scheduledAt = scheduledAt;
     }
 
-    /** Each subtype declares its kind for projections, reports, and policies. */
-    public abstract CelebrationType type();
-
-    /**
-     * Subtypes implement this to assert that all required participants and data
-     * are present before a celebration can be confirmed. Throws if invalid.
-     */
-    protected abstract void validateForConfirmation();
-
     public void confirm() {
-        if (status != CelebrationStatus.DRAFT) {
-            throw new IllegalStateException("Only DRAFT celebrations can be confirmed");
-        }
-        validateForConfirmation();
+        if (status != CelebrationStatus.DRAFT) throw new IllegalStateException("Only DRAFT celebrations can be confirmed");
         this.status = CelebrationStatus.CONFIRMED;
     }
 
+    public void complete() {
+        if (status != CelebrationStatus.CONFIRMED) throw new IllegalStateException("Only CONFIRMED celebrations can be completed");
+        this.status = CelebrationStatus.COMPLETED;
+    }
+
     public void cancel(String reason) {
-        if (status == CelebrationStatus.COMPLETED) {
-            throw new IllegalStateException("Cannot cancel a completed celebration");
-        }
+        if (status == CelebrationStatus.COMPLETED) throw new IllegalStateException("Cannot cancel a completed celebration");
         this.status = CelebrationStatus.CANCELLED;
         this.notes = (notes == null ? "" : notes + "\n") + "Cancelled: " + reason;
     }
 
     public void reschedule(LocalDateTime newDateTime) {
-        if (status == CelebrationStatus.COMPLETED || status == CelebrationStatus.CANCELLED) {
-            throw new IllegalStateException("Cannot reschedule a celebration in status " + status);
-        }
-        this.scheduledAt = Objects.requireNonNull(newDateTime);
+        if (status == CelebrationStatus.COMPLETED || status == CelebrationStatus.CANCELLED)
+            throw new IllegalStateException("Cannot reschedule in status " + status);
+        this.scheduledAt = newDateTime;
     }
 
-    public UUID id() { return id; }
-    public LocalDateTime scheduledAt() { return scheduledAt; }
-    public UUID locationId() { return locationId; }
-    public UUID presidingPriestId() { return presidingPriestId; }
-    public CelebrationStatus status() { return status; }
-    public String notes() { return notes; }
+    public UUID getId() { return id; }
+    public CelebrationType getType() {
+        if (this instanceof Mass) return CelebrationType.MASS;
+        if (this instanceof Baptism) return CelebrationType.BAPTISM;
+        if (this instanceof Wedding) return CelebrationType.WEDDING;
+        if (this instanceof Funeral) return CelebrationType.FUNERAL;
+        if (this instanceof Confirmation) return CelebrationType.CONFIRMATION;
+        if (this instanceof FirstCommunion) return CelebrationType.FIRST_COMMUNION;
+        return null;
+    }
+    public CelebrationStatus getStatus() { return status; }
+    public LocalDateTime getScheduledAt() { return scheduledAt; }
+    public UUID getLocationId() { return locationId; }
+    public UUID getPresidingPriestId() { return presidingPriestId; }
+    public String getNotes() { return notes; }
 }

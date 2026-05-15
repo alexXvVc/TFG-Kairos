@@ -1,62 +1,44 @@
 package com.parish.celebrations.scheduling.domain;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Demonstrates the value of putting validation in the domain.
- *
- * The frontend can be as simple as a form. The domain rejects
- * impossible weddings — and the error message comes from here,
- * not scattered across controllers.
- */
+@Entity
+@DiscriminatorValue("WEDDING")
 public class Wedding extends Celebration {
 
-    private final UUID spouseAId;
-    private final UUID spouseBId;
-    private final List<UUID> witnessIds;
+    @Column(name = "spouse_a_id", columnDefinition = "BINARY(16)")
+    private UUID spouseAId;
+
+    @Column(name = "spouse_b_id", columnDefinition = "BINARY(16)")
+    private UUID spouseBId;
+
+    @Column(name = "documentation_complete")
     private boolean documentationComplete;
 
-    public Wedding(UUID id, LocalDateTime scheduledAt, UUID locationId, UUID presidingPriestId,
+    @ElementCollection
+    @CollectionTable(name = "wedding_witnesses", joinColumns = @JoinColumn(name = "celebration_id"))
+    @Column(name = "person_id", columnDefinition = "BINARY(16)")
+    private List<UUID> witnessIds = new ArrayList<>();
+
+    protected Wedding() {}
+
+    public Wedding(UUID locationId, UUID presidingPriestId, LocalDateTime scheduledAt,
                    UUID spouseAId, UUID spouseBId, List<UUID> witnessIds) {
-        super(id, scheduledAt, locationId, presidingPriestId);
-
-        if (spouseAId == null || spouseBId == null) {
-            throw new IllegalArgumentException("A wedding requires two spouses");
-        }
-        if (spouseAId.equals(spouseBId)) {
-            throw new IllegalArgumentException("Spouses must be two different people");
-        }
-        if (witnessIds == null || witnessIds.size() < 2) {
-            throw new IllegalArgumentException("A wedding requires at least two witnesses");
-        }
-
+        super(locationId, presidingPriestId, scheduledAt);
         this.spouseAId = spouseAId;
         this.spouseBId = spouseBId;
-        this.witnessIds = List.copyOf(witnessIds);
+        this.witnessIds = witnessIds != null ? new ArrayList<>(witnessIds) : new ArrayList<>();
         this.documentationComplete = false;
     }
 
-    public void markDocumentationComplete() {
-        this.documentationComplete = true;
-    }
+    public void markDocumentationComplete() { this.documentationComplete = true; }
 
-    @Override
-    public CelebrationType type() {
-        return CelebrationType.WEDDING;
-    }
-
-    @Override
-    protected void validateForConfirmation() {
-        if (!documentationComplete) {
-            throw new IllegalStateException(
-                "Wedding cannot be confirmed: civil and parish documentation must be complete");
-        }
-    }
-
-    public UUID spouseAId() { return spouseAId; }
-    public UUID spouseBId() { return spouseBId; }
-    public List<UUID> witnessIds() { return witnessIds; }
+    public UUID getSpouseAId() { return spouseAId; }
+    public UUID getSpouseBId() { return spouseBId; }
+    public List<UUID> getWitnessIds() { return witnessIds; }
     public boolean isDocumentationComplete() { return documentationComplete; }
 }

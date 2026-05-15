@@ -1,42 +1,39 @@
 package com.parish.celebrations.scheduling.domain;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
+@DiscriminatorValue("BAPTISM")
 public class Baptism extends Celebration {
 
-    private final UUID childId;
-    private final List<UUID> parentIds;
-    private final List<UUID> godparentIds;
+    @Column(name = "child_id", columnDefinition = "BINARY(16)")
+    private UUID childId;
 
-    public Baptism(UUID id, LocalDateTime scheduledAt, UUID locationId, UUID presidingPriestId,
+    @ElementCollection
+    @CollectionTable(name = "baptism_parents", joinColumns = @JoinColumn(name = "celebration_id"))
+    @Column(name = "person_id", columnDefinition = "BINARY(16)")
+    private List<UUID> parentIds = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "baptism_godparents", joinColumns = @JoinColumn(name = "celebration_id"))
+    @Column(name = "person_id", columnDefinition = "BINARY(16)")
+    private List<UUID> godparentIds = new ArrayList<>();
+
+    protected Baptism() {}
+
+    public Baptism(UUID locationId, UUID presidingPriestId, LocalDateTime scheduledAt,
                    UUID childId, List<UUID> parentIds, List<UUID> godparentIds) {
-        super(id, scheduledAt, locationId, presidingPriestId);
-
-        if (childId == null) {
-            throw new IllegalArgumentException("A baptism requires a child");
-        }
-        if (godparentIds == null || godparentIds.isEmpty()) {
-            throw new IllegalArgumentException("A baptism requires at least one godparent");
-        }
-
+        super(locationId, presidingPriestId, scheduledAt);
         this.childId = childId;
-        this.parentIds = List.copyOf(parentIds == null ? List.of() : parentIds);
-        this.godparentIds = List.copyOf(godparentIds);
+        this.parentIds = parentIds != null ? new ArrayList<>(parentIds) : new ArrayList<>();
+        this.godparentIds = godparentIds != null ? new ArrayList<>(godparentIds) : new ArrayList<>();
     }
 
-    @Override
-    public CelebrationType type() {
-        return CelebrationType.BAPTISM;
-    }
-
-    @Override
-    protected void validateForConfirmation() {
-        // Confirmation rules can grow here as you learn the domain better.
-    }
-
-    public UUID childId() { return childId; }
-    public List<UUID> parentIds() { return parentIds; }
-    public List<UUID> godparentIds() { return godparentIds; }
+    public UUID getChildId() { return childId; }
+    public List<UUID> getParentIds() { return parentIds; }
+    public List<UUID> getGodparentIds() { return godparentIds; }
 }

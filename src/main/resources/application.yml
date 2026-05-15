@@ -2,7 +2,7 @@ spring:
   application:
     name: parish-celebrations
   datasource:
-    url: jdbc:mysql://localhost:3306/parish?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/parish?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: parish
     password: parish_dev
   jpa:
@@ -12,7 +12,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
 
 server:
   port: 8080
@@ -22,3 +22,8 @@ server:
 logging:
   level:
     com.parish.celebrations: DEBUG
+
+app:
+  jwt:
+    secret: "kairos-parish-super-secret-key-for-jwt-signing-must-be-long-enough-256bits"
+    expiration-ms: 86400000   # 24 hours
